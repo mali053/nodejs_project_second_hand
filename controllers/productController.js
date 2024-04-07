@@ -1,59 +1,65 @@
-const express = require('express')
-const app = express.Router()
-const ProductsFormDB = require('../models/product')
+const productService = require('../services/productService')
 
-app.get('/:categoryID', async (req, res) => {
+const getProductById = async (req, res) => {
   try {
-    const categoryId = req.params.categoryID
-    const products = await ProductsFormDB.find({ categoryId });
-    res.send(products)
+    const categoryId = req.params.categoryId
+    console.log(categoryId);
+
+    const product = await productService.getProductByCategoryId(categoryId)
+
+    res.send(product)
   } catch (err) {
-    res.status(404).send('category not found: ' + err.message)
+    res.status(404).send('Product not found')
   }
-})
+}
 
-app.get('/:categoryID/:productID', async (req, res) => {
+const getProductByIdAndCategoryId = async (req, res) => {
   try {
-    const categoryId = req.params.categoryID
-    const productId = req.params.productID
-    const product = await ProductsFormDB.findById(productId)
-    if (product.categoryId === categoryId) { res.send(product) } else {
-      res.status(404).send('product exist in another category')
-    }
+    const productId = req.params.productId
+    const categoryId = req.params.categoryId
+    const product = await productService.getProductByIdAndCategoryId(productId, categoryId)
+    res.send(product)
   } catch (err) {
-    res.status(404).send('product not found')
+    res.status(404).send('Product not found or does not belong to the specified category')
   }
-})
+}
 
-app.post('/', async (req, res) => {
+const addProduct = async (req, res) => {
   try {
-    const newProduct = new ProductsFormDB({ name: req.body.name, categoryId: req.body.categoryId })
-    await newProduct.save()
+    const { name, categoryId } = req.body
+    await productService.addProduct(name, categoryId)
     res.status(201).send('Product added successfully')
   } catch (err) {
     console.error(err)
     res.status(500).send(err.message)
   }
-})
+}
 
-app.put('/:productId', async (req, res, err) => {
+const updateProduct = async (req, res) => {
   try {
-    const id = req.params.productId
-    await ProductsFormDB.findByIdAndUpdate(id, { name: req.body.name, categoryId: req.body.category })
+    const productId = req.params.productId
+    const { name, categoryId } = req.body
+    await productService.updateProduct(productId, name, categoryId)
     res.send('Product updated successfully')
   } catch (err) {
-    res.status(404).send('product not found')
+    res.status(404).send('Product not found')
   }
-})
+}
 
-app.delete('/:productId', async (req, res) => {
+const deleteProduct = async (req, res) => {
   try {
-    const id = req.params.productId
-    await ProductsFormDB.findByIdAndDelete(id)
+    const productId = req.params.productId
+    await productService.deleteProduct(productId)
     res.send('Product deleted successfully')
   } catch (err) {
-    res.status(404).send('product not found')
+    res.status(404).send('Product not found')
   }
-})
+}
 
-module.exports = app
+module.exports = {
+  getProductById,
+  getProductByIdAndCategoryId,
+  addProduct,
+  updateProduct,
+  deleteProduct
+}

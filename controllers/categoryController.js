@@ -1,58 +1,62 @@
-const express = require('express')
-const app = express.Router()
-const CategoriesFromDB = require('../models/category')
+const categoryService = require('../services/categoryService')
 
-app.get('/:categoryID', async (req, res) => {
+const getAllCategories = async (req, res) => {
   try {
-    const id = req.params.categoryID
-    const oneCategory = await CategoriesFromDB.findById(id)
-    res.send(oneCategory)
-  } catch (err) {
-    res.status(404)
-    res.send('category not found or you don\'t put category ID in the request')
-  }
-})
-
-app.get('/', async (req, res) => {
-  try {
-    const category = await CategoriesFromDB.find()
-    const sortedCategory = category.toSorted((a, b) => {
-      return a.name.localeCompare(b.name)
-    })
-    res.send(sortedCategory)
+    const category = await categoryService.getAllCategories()
+    res.send(category)
   } catch (err) {
     res.status(404).send('categories not found')
   }
-})
+}
 
-app.post('/', async (req, res) => {
+const getCategoryById = async (req, res) => {
   try {
-    const newCategory = new CategoriesFromDB({ name: req.body.name })
-    await newCategory.save()
-    res.send('the category added successfully')
+    const id = req.params.categoryID
+    const oneCategory = await categoryService.getCategoryById(id)
+    if (!oneCategory) {
+      res.status(404).send('Category not found or you didn\'t provide a category ID in the request')
+      return
+    }
+    res.send(oneCategory)
+  } catch (err) {
+    res.status(500).send('Internal Server Error')
+  }
+}
+
+const addCategory = async (req, res) => {
+  try {
+    const name = req.body.name
+    const addCategory = await categoryService.addCategory(name)
+    res.send('the category added successfully: ' + addCategory)
   } catch (err) {
     res.status(500).send(err.message)
   }
-})
+}
 
-app.put('/:categoryID', async (req, res) => {
+const updateCategory = async (req, res) => {
   try {
     const id = req.params.categoryID
-    await CategoriesFromDB.findByIdAndUpdate(id, { name: req.body.name })
-    res.send('the category updated successfully')
+    const updatedCategory = await categoryService.updateCategory(id, req.body.name)
+    res.send('The category updated successfully: ' + updatedCategory)
   } catch (err) {
-    res.status(404).send('Cannot update not found category  ' + err.message)
+    res.status(404).send('Cannot update not found category: ' + err.message)
   }
-})
+}
 
-app.delete('/:categoryID', async (req, res) => {
+const deleteCategory = async (req, res) => {
   try {
     const id = req.params.categoryID
-    await CategoriesFromDB.findByIdAndDelete(id)
+    await categoryService.deleteCategory(id)
     res.send('the category deleted successfully')
   } catch (err) {
     res.status(404).send('Cannot delete category ')
   }
-})
+}
 
-module.exports = app
+module.exports = {
+  getAllCategories,
+  getCategoryById,
+  addCategory,
+  updateCategory,
+  deleteCategory
+}

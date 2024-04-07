@@ -1,9 +1,9 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const config = require('../config/config')
+require('dotenv').config()
 const UserFromDB = require('../models/user')
 
-async function signup (username, password, email, role) {
+const signup = async (username, password, email, role) => {
   try {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
@@ -14,7 +14,7 @@ async function signup (username, password, email, role) {
   }
 }
 
-async function login (id, password) {
+const login = async (id, password) => {
   try {
     const user = await UserFromDB.findById(id)
     if (!user) {
@@ -26,7 +26,7 @@ async function login (id, password) {
       throw new Error('Invalid password')
     }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, config.TOKEN_SECRET)
+    const token = jwt.sign({ id: user.id, username: user.username }, process.env.TOKEN_SECRET)
     return token
   } catch (err) {
     throw new Error(err.message)
